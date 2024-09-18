@@ -100,14 +100,14 @@ class ScreenshotAutomation:
         print("Listening for keyboard inputs...")
         with keyboard.Listener(on_press=self.on_press) as listener:
             # Also process the image queue in the main thread
-            # while listener.running:
-            #     try:
-            #         img = self.image_queue.get_nowait()  # Get the image if available
-            #         # self.display_image(img)
-            #     except queue.Empty:
-            #         pass
+            while listener.running:
+                try:
+                    img = self.image_queue.get_nowait()  # Get the image if available
+                    # self.display_image(img)
+                except queue.Empty:
+                    pass
 
-            #     time.sleep(0.01)
+                time.sleep(0.01)
 
     def display_image(self, img):
         """Display the image in a window in the main thread."""
@@ -143,14 +143,14 @@ class ScreenshotAutomation:
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         
         # Apply Canny edge detection
-        edges = cv2.Canny(gray_img, 100, 200)
+        edges = cv2.Canny(gray_img, self.low_canny, self.high_canny)
 
         # Add the edges to the image queue for display in the main thread
         self.image_queue.put(edges)
 
         # Save the processed image
         cv2.imwrite(filepath, edges)
-        print(f"Screenshot with Canny edges saved to: {filepath}")
+        print(f"Screenshot with Canny({self.low_canny}/{self.high_canny}) edges saved to: {filepath}")
 
     def move_mouse(self, new_x, new_y):
         """Move the mouse to the specified coordinates."""
@@ -174,16 +174,18 @@ class ScreenshotAutomation:
                 else:
                     print("Pattern not found, saving screenshot of the current screen...")
                     self.capture_screenshot(self.key_actions[key_char])
-
-        except AttributeError:
-            if key.char == '=':
+            # Handle the special keys using str(key) for keys like =, -, [, ]
+            elif key_char == '=':
                 self.low_canny += 5
-            elif key.char == '-':
+            elif key_char == '-':
                 self.low_canny -= 5
-            elif key.char == ']':
+            elif key_char == ']':
                 self.high_canny += 5
-            elif key.char == '[':
+            elif key_char == '[':
                 self.high_canny -= 5
+        except AttributeError:
+            # Handle any other unexpected key issues gracefully
+            print(f"Special key pressed or an unhandled exception occurred: {key}")
             
 
     def calculate_new_position(self, key_char):
