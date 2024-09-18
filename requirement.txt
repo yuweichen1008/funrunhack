@@ -1,0 +1,6 @@
+opencv-python
+pyobjc-core
+pyobjc-framework-Quartz
+pyobjc
+pynput
+pyautogui~=0.9.54
